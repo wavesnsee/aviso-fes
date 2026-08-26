@@ -75,8 +75,8 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 if(BUILD_PYTHON)
-  # The library must be built using C++14 compiler.
-  set(CMAKE_CXX_STANDARD 14)
+  # Prefer C++14, but keep compatibility with legacy platforms such as
+  # RHEL 7/GCC 4.8 where only C++11 is available.
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
   set(CMAKE_MACOSX_RPATH 1)
@@ -84,12 +84,17 @@ if(BUILD_PYTHON)
   include(CheckCXXCompilerFlag)
   if(NOT WIN32)
     check_cxx_compiler_flag("-std=c++14" HAS_CPP14_FLAG)
+    check_cxx_compiler_flag("-std=c++11" HAS_CPP11_FLAG)
   else()
     check_cxx_compiler_flag("/std:c++14" HAS_CPP14_FLAG)
   endif()
 
-  if(NOT HAS_CPP14_FLAG)
-    message(FATAL_ERROR "Unsupported compiler -- requires C++14 support!")
+  if(HAS_CPP14_FLAG)
+    set(CMAKE_CXX_STANDARD 14)
+  elseif(HAS_CPP11_FLAG)
+    set(CMAKE_CXX_STANDARD 11)
+  else()
+    message(FATAL_ERROR "Unsupported compiler -- requires C++11 support!")
   endif()
 
   # Check CXX compiler and linker flags

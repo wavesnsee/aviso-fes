@@ -114,11 +114,15 @@ def revision():
     pattern = re.compile(r'([\w\d\.]+)-(\d+)-g[\w\d]+(?:-(dirty))?')
     match = pattern.search(stdout)
     if match is None:
-        # No tag found, use the last commit
-        pattern = re.compile(r'[\w\d]+(?:-(dirty))?')
-        match = pattern.search(stdout)
-        assert match is not None, f'Unable to parse git output {stdout!r}'
-        version = '0.0'
+        # Editable installs may clone a pinned commit without fetching tags.
+        # Keep the release version stored in the public header in that case.
+        pattern = re.compile(PATTERN + r' "(.*)"').search
+        with open(path) as stream:
+            match = next((pattern(line) for line in stream
+                          if pattern(line) is not None), None)
+        if match is None:
+            raise AssertionError(f'Unable to determine version from {stdout!r}')
+        version = match.group(1)
     else:
         version = match.group(1)
         commits = int(match.group(2))

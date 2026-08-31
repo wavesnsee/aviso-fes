@@ -41,19 +41,35 @@ if (NETCDF_INCLUDE_DIR AND NETCDF_LIBRARY)
   set (NETCDF_FIND_QUIETLY TRUE)
 endif ()
 
+# Metwork and other layered environments expose NetCDF through nc-config,
+# while their include and library directories are outside CMake's defaults.
+find_program(_nc_config "nc-config")
+if (_nc_config)
+  execute_process(
+    COMMAND ${_nc_config} "--includedir"
+    OUTPUT_VARIABLE _nc_include_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${_nc_config} "--libdir"
+    OUTPUT_VARIABLE _nc_lib_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
 set(USE_DEFAULT_PATHS "NO_DEFAULT_PATH")
 if(NETCDF_USE_DEFAULT_PATHS)
   set(USE_DEFAULT_PATHS "")
 endif()
 
 find_path (NETCDF_INCLUDE_DIR netcdf.h
+  HINTS "${_nc_include_dir}"
   PATHS "${NETCDF_DIR}/include")
 mark_as_advanced (NETCDF_INCLUDE_DIR)
 set (NETCDF_C_INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})
 
 find_library (NETCDF_LIBRARY NAMES netcdf
   PATHS "${NETCDF_DIR}/lib"
-  HINTS "${NETCDF_INCLUDE_DIR}/../lib")
+  HINTS "${_nc_lib_dir}"
+        "${NETCDF_INCLUDE_DIR}/../lib")
 mark_as_advanced (NETCDF_LIBRARY)
 
 set (NETCDF_C_LIBRARIES ${NETCDF_LIBRARY})
@@ -119,17 +135,17 @@ set (NETCDF_INCLUDE_DIRS ${NETCDF_includes})
 
 if( EXISTS "${NETCDF_INCLUDE_DIRS}/netcdf_meta.h")
   file( STRINGS "${NETCDF_INCLUDE_DIRS}/netcdf_meta.h"
-        _version_contents REGEX "define NC_VERSION" )
-  string( REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1"
-          NETCDF_VERSION ${_version_contents} )
+        _version_contents REGEX "define NC_VERSION " )
+  string( REGEX REPLACE ".*\"([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1"
+          NETCDF_VERSION "${_version_contents}" )
 else()
   find_program(_nc_config "nc-config")
   if( _nc_config)
     execute_process(
       COMMAND ${_nc_config} "--version"
       OUTPUT_VARIABLE _version_contents)
-    string( REGEX REPLACE ".*([0-9]\\.[0-9]\\.[0-9]).*" "\\1"
-            NETCDF_VERSION ${_version_contents} )
+    string( REGEX REPLACE ".*([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1"
+            NETCDF_VERSION "${_version_contents}" )
   endif()
   unset(_nc_config)
 endif()

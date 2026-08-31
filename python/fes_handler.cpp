@@ -103,8 +103,8 @@ Handler::cast_datetime(pybind11::array& array) const
     for (pybind11::ssize_t ix = 0; ix < size; ++ix) {
       auto epoch = _data[ix];
       result.emplace_back(
-        std::chrono::system_clock::from_time_t(epoch / 1'000'000) +
-        std::chrono::microseconds(epoch % 1'000'000));
+        std::chrono::system_clock::from_time_t(epoch / 1000000) +
+        std::chrono::microseconds(epoch % 1000000));
     }
   }
   return result;

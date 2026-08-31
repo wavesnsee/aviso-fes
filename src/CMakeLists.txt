@@ -14,5 +14,8 @@
 # with FES.  If not, see <http://www.gnu.org/licenses/>.
 file(GLOB FES_SOURCES "*.c")
 add_library(fes ${FES_SOURCES})
+# The static library is linked into the Python extension, which is a shared
+# object.  Its object files must therefore be position-independent on Linux.
+set_target_properties(fes PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(fes PUBLIC ${NETCDF_LIBRARIES})
 install(TARGETS fes DESTINATION lib)

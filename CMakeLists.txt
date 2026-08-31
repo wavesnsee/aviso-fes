@@ -178,7 +178,21 @@ add_subdirectory(test)
 add_subdirectory(examples)
 
 if(BUILD_PYTHON)
-  find_package(Python3 COMPONENTS Interpreter Development)
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
+  # pybind11 2.x still uses CMake's legacy FindPythonInterp/FindPythonLibs
+  # modules in this release.  Keep those modules on the same interpreter as
+  # FindPython3; otherwise old systems may silently select /bin/python3.6
+  # while setup.py is running under the Metwork Python 3.9 installation.
+  set(PYTHON_EXECUTABLE "${Python3_EXECUTABLE}" CACHE FILEPATH
+      "Python interpreter used by pybind11" FORCE)
+  set(PYTHON_INCLUDE_DIR "${Python3_INCLUDE_DIRS}" CACHE PATH
+      "Python headers used by pybind11" FORCE)
+  if(Python3_LIBRARIES)
+    list(GET Python3_LIBRARIES 0 _PYTHON_LIBRARY)
+    set(PYTHON_LIBRARY "${_PYTHON_LIBRARY}" CACHE FILEPATH
+        "Python library used by pybind11" FORCE)
+  endif()
   execute_process(
     COMMAND
       ${Python3_EXECUTABLE} -c [=[import os

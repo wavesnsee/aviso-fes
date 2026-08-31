@@ -231,6 +231,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(extdir),
             '-DCMAKE_PREFIX_PATH=' + sys.prefix,
             '-DPython3_EXECUTABLE=' + sys.executable,
+            # pybind11 in FES 2.9.7 also consumes the legacy CMake variable.
+            '-DPYTHON_EXECUTABLE=' + sys.executable,
         ] + self.set_cmake_user_options()
 
         is_windows = platform.system() == 'Windows'
